@@ -1,4 +1,8 @@
 #!/usr/bin/make -f
+
+# Copyright (c) 2018 Anton Semjonov
+# Licensed under the MIT License
+
 # ------- settings --------
 
 # make settings
