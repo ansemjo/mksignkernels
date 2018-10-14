@@ -10,13 +10,13 @@ OSREL   = /etc/os-release
 EFISTUB = /usr/lib/systemd/boot/efi/linuxx64.efi.stub
 
 # signing keys
-PKI  := ../pki
+PKI  := ./pki
 KEY  =  $(PKI)/DatabaseKey.key
 CERT =  $(PKI)/DatabaseKey.crt
 
 # directories
 BOOT := /boot
-ESP  := /tmp
+ESP  := ./esp
 
 # what's needed for a single kernel
 KERNEL    = /boot/vmlinuz-$(if $*,$*,%)
