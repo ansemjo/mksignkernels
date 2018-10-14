@@ -55,11 +55,11 @@ kernel-% :
 hook:
 	while read target; do \
 	  if [[ $$target =~ $(HOOKTARGETS) ]]; then \
-	    make kernel_$${BASH_REMATCH[1]}; \
+	    $(SELF) kernel-$${BASH_REMATCH[1]}; \
 	  else FORCEALL=yes; fi \
 	done; \
 	if [[ $$FORCEALL == yes ]]; then \
-	  ./ kernels; \
+	  $(SELF) kernels; \
 	fi
 
 $(ESP)/vmlinuz-%.efi : $(EFISTUB) $(OSREL) $(KEY) $(CERT) $(KERNEL) $(INITRAMFS)
