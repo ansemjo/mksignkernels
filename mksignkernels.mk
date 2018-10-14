@@ -24,6 +24,22 @@
 # 	@$(SELF) $(ESP)/vmlinuz-linux-fallback.efi \
 # 		KERNEL="$(BOOT)/vmlinuz-linux"
 #
+# --- Override default template ---
+#
+# To override the default template, you need to overwrite the kernel-%
+# target or set FOUNDKERNELS to an empty value and only use CUSTOMKERNELS.
+# Use this as a template:
+#
+# kernel-% :
+# 	@$(SELF) $(OUTPUT) \
+# 		EFISTUB="$(EFISTUB)" \
+# 		OSREL="$(OSREL)" \
+# 		KEY="$(KEY)" \
+# 		CERT="$(CERT)" \
+# 		KERNEL="$(KERNEL)" \
+# 		INITRAMFS="$(INITRAMFS)" \
+# 		CMDLINE="$(CMDLINE)"
+#
 # --- Global settings ---
 #
 # You can also change any of the global settings for all targets here:
