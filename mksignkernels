@@ -36,14 +36,6 @@ HOOKTARGETS  = boot/vmlinuz-(.*)
 # -------- targets --------
 .DEFAULT_GOAL := kernels
 
-# include any custom settings / targets
--include /etc/mksignkernels.mk
--include ./mksignkernels.mk
-
-# this is the "make all" that will build custom and found kernels
-.PHONY: kernels
-kernels: $(CUSTOMKERNELS) $(FOUNDKERNELS)
-
 # default configuration for a single kernel
 .PHONY: kernel-%
 kernel-% :
@@ -55,6 +47,14 @@ kernel-% :
 		KERNEL="$(KERNEL)" \
 		INITRAMFS="$(INITRAMFS)" \
 		CMDLINE="$(CMDLINE)"
+
+# include any custom settings / targets
+-include /etc/mksignkernels.mk
+-include ./mksignkernels.mk
+
+# this is the "make all" that will build custom and found kernels
+.PHONY: kernels
+kernels: $(CUSTOMKERNELS) $(FOUNDKERNELS)
 
 # hook mode for pacman, reads targets from stdin
 .PHONY: hook
