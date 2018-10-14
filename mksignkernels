@@ -2,45 +2,46 @@
 # ------- settings --------
 
 # make settings
-SHELL := /bin/bash
-SELF  := ./signkernels --no-print-directory
+SHELL = /bin/bash
+SELF  = mksignkernels --no-print-directory
 
 # required stub files
 OSREL   = /etc/os-release
 EFISTUB = /usr/lib/systemd/boot/efi/linuxx64.efi.stub
 
 # signing keys
-PKI  := ./pki
-KEY  =  $(PKI)/DatabaseKey.key
-CERT =  $(PKI)/DatabaseKey.crt
+PKI  = /etc/efikeys
+KEY  = $(PKI)/DatabaseKey.key
+CERT = $(PKI)/DatabaseKey.crt
 
 # directories
-BOOT := /boot
-ESP  := ./esp
+BOOT = /boot
+ESP  = $(BOOT)/efi
 
 # what's needed for a single kernel
-KERNEL    = /boot/vmlinuz-$(if $*,$*,%)
-MICROCODE	= /boot/intel-ucode.img
-INITRAMFS = $(MICROCODE) /boot/initramfs-$(if $*,$*,%).img
+KERNEL    = $(BOOT)/vmlinuz-$(if $*,$*,%)
+MICROCODE	= $(BOOT)/intel-ucode.img
+INITRAMFS = $(MICROCODE) $(BOOT)/initramfs-$(if $*,$*,%).img
 OUTPUT    = $(ESP)/vmlinuz-$*.efi
 CMDLINE   = quiet
 
 # search for kernels / hook targets
-FOUNDKERNELS := $(addprefix kernel-,$(shell ls $(BOOT)/vmlinuz-* | sed 's/.*\/vmlinuz-//'))
-HOOKTARGETS  := boot/vmlinuz-(.*)
+FOUNDKERNELS = $(addprefix kernel-,$(shell ls $(BOOT)/vmlinuz-* | sed 's/.*\/vmlinuz-//'))
+HOOKTARGETS  = boot/vmlinuz-(.*)
 
 # -------- targets --------
-.PHONY: kernels kernel-% hook
 .DEFAULT_GOAL := kernels
 
 # include any custom settings / targets
--include /etc/sbkernelsign.mk
--include settings.mk
+-include /etc/mksignkernels.mk
+-include ./mksignkernels.mk
 
 # this is the "make all" that will build custom and found kernels
+.PHONY: kernels
 kernels: $(CUSTOMKERNELS) $(FOUNDKERNELS)
 
 # default configuration for a single kernel
+.PHONY: kernel-%
 kernel-% :
 	@$(SELF) $(OUTPUT) \
 		EFISTUB="$(EFISTUB)" \
@@ -52,8 +53,9 @@ kernel-% :
 		CMDLINE="$(CMDLINE)"
 
 # hook mode for pacman, reads targets from stdin
+.PHONY: hook
 hook:
-	while read target; do \
+	@while read target; do \
 	  if [[ $$target =~ $(HOOKTARGETS) ]]; then \
 	    $(SELF) kernel-$${BASH_REMATCH[1]}; \
 	  else FORCEALL=yes; fi \
@@ -62,6 +64,7 @@ hook:
 	  $(SELF) kernels; \
 	fi
 
+# bundle and sign a kernel binary
 $(ESP)/vmlinuz-%.efi : $(EFISTUB) $(OSREL) $(KEY) $(CERT) $(KERNEL) $(INITRAMFS)
 	objcopy "$(EFISTUB)" "$@.new" \
 		--change-section-vma   .osrel=0x0020000  --add-section   .osrel="$(OSREL)" \
