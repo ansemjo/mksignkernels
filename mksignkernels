@@ -75,3 +75,10 @@ $(ESP)/vmlinuz-%.efi : $(EFISTUB) $(OSREL) $(KEY) $(CERT) $(KERNEL) $(INITRAMFS)
 		--output "$@.new" "$@.new"
 	mv -b "$@.new" "$@"
 
+# sign a single binary, SIGN=... required
+.PHONY: sign
+sign:
+	@[[ -n "$(SIGN)" ]] || { echo "SIGN=... argument required"; exit 1; }
+	sbverify --cert "$(CERT)" "$(SIGN)" || \
+	sbsign --key "$(KEY)" --cert "$(CERT)" --output "$(SIGN)" "$(SIGN)"
+
