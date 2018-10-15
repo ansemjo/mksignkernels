@@ -3,7 +3,7 @@
 pkgname="mksignkernels"
 pkgdesc="Bundle and sign your kernel for SecureBoot-enabled systems."
 
-pkgver=0.1
+pkgver=0.0.1
 pkgrel=1
 
 arch=('any')
