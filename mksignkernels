@@ -21,12 +21,13 @@ CERT = $(PKI)/DatabaseKey.crt
 # directories
 BOOT = /boot
 ESP  = $(BOOT)/efi
+OUT  = $(ESP)/EFI/Linux
 
 # what's needed for a single kernel
 KERNEL    = $(BOOT)/vmlinuz-$(if $*,$*,%)
-MICROCODE	= $(BOOT)/intel-ucode.img
+MICROCODE = $(BOOT)/intel-ucode.img
 INITRAMFS = $(MICROCODE) $(BOOT)/initramfs-$(if $*,$*,%).img
-OUTPUT    = $(ESP)/vmlinuz-$*.efi
+SIGNED    = $(OUT)/vmlinuz-$*.efi
 CMDLINE   = quiet
 
 # search for kernels / hook targets
@@ -39,7 +40,7 @@ HOOKTARGETS  = boot/vmlinuz-(.*)
 # default configuration for a single kernel
 .PHONY: kernel-%
 kernel-% :
-	@$(SELF) $(OUTPUT) \
+	@$(SELF) $(SIGNED) \
 		EFISTUB="$(EFISTUB)" \
 		OSREL="$(OSREL)" \
 		KEY="$(KEY)" \
@@ -69,12 +70,16 @@ hook:
 	fi
 
 # bundle and sign a kernel binary
-$(ESP)/vmlinuz-%.efi : $(EFISTUB) $(OSREL) $(KEY) $(CERT) $(KERNEL) $(INITRAMFS)
+$(OUT)/vmlinuz-%.efi : $(EFISTUB) $(OSREL) $(KEY) $(CERT) $(KERNEL) $(INITRAMFS)
 	objcopy "$(EFISTUB)" "$@.new" \
-		--change-section-vma   .osrel=0x0020000  --add-section   .osrel="$(OSREL)" \
-		--change-section-vma .cmdline=0x0030000  --add-section .cmdline=<(printf '%s' '$(CMDLINE)') \
-		--change-section-vma   .linux=0x2000000  --add-section   .linux="$(KERNEL)" \
-		--change-section-vma  .initrd=0x3000000  --add-section  .initrd=<(cat $(INITRAMFS))
+	  --add-section        .osrel=$(OSREL) \
+	  --change-section-vma .osrel=0x0020000 \
+	  --add-section        .cmdline=<(printf '%s' '$(CMDLINE)') \
+	  --change-section-vma .cmdline=0x0030000 \
+	  --add-section        .linux="$(KERNEL)" \
+	  --change-section-vma .linux=0x2000000 \
+	  --add-section        .initrd=<(cat $(INITRAMFS)) \
+	  --change-section-vma .initrd=0x3000000
 	sbsign --key "$(KEY)" --cert "$(CERT)" \
 		--output "$@.new" "$@.new"
 	mv -b "$@.new" "$@"
