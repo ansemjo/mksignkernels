@@ -6,8 +6,9 @@
 # ------- settings --------
 
 # make settings
-SHELL = /bin/bash
-SELF  = mksignkernels --no-print-directory
+SHELL := /bin/bash
+SELFP := $(abspath $(lastword $(MAKEFILE_LIST)))
+SELF  := make -f $(SELFP) --no-print-directory
 
 # required stub files
 OSREL   = /etc/os-release
