@@ -10,8 +10,7 @@ SHELL := /bin/bash
 SELFP := $(abspath $(lastword $(MAKEFILE_LIST)))
 SELF  := make -f $(SELFP) --no-print-directory
 
-# required stub files
-OSREL   = /etc/os-release
+# required stub file
 EFISTUB = /usr/lib/systemd/boot/efi/linuxx64.efi.stub
 
 # signing keys
@@ -25,11 +24,21 @@ ESP  = $(BOOT)/efi
 OUT  = $(ESP)/EFI/Linux
 
 # what's needed for a single kernel
+ID        = $*
 KERNEL    = $(BOOT)/vmlinuz-$(if $*,$*,%)
 MICROCODE = $(BOOT)/intel-ucode.img
 INITRAMFS = $(MICROCODE) $(BOOT)/initramfs-$(if $*,$*,%).img
 SIGNED    = $(OUT)/vmlinuz-$*.efi
 CMDLINE   = quiet
+
+# static osrelease info
+#OSREL     = /etc/os-release
+
+# dynamic osrelease info
+TIMESTAMP = $(shell date --utc +%FT%T%Z)
+KERNELVER = $(shell strings $(KERNEL) | sed -n '/gcc version/s/^\([^ ]\+\).*/\1/p')
+OSNAME    = $(shell source /etc/os-release && echo "$$PRETTY_NAME")
+OSREL     = <(printf '%s=\"%s\"\n' PRETTY_NAME '$(OSNAME)' ID '$(ID)' VERSION_ID 'v$(KERNELVER)-$(TIMESTAMP)')
 
 # search for kernels / hook targets
 FOUNDKERNELS = $(addprefix kernel-,$(shell ls $(BOOT)/vmlinuz-* | sed 's/.*\/vmlinuz-//'))
@@ -71,7 +80,7 @@ hook:
 	fi
 
 # bundle and sign a kernel binary
-$(OUT)/vmlinuz-%.efi : $(EFISTUB) $(OSREL) $(KEY) $(CERT) $(KERNEL) $(INITRAMFS)
+$(OUT)/vmlinuz-%.efi : $(EFISTUB) $(KEY) $(CERT) $(KERNEL) $(INITRAMFS)
 	objcopy "$(EFISTUB)" "$@.new" \
 	  --add-section        .osrel=$(OSREL) \
 	  --change-section-vma .osrel=0x0020000 \
