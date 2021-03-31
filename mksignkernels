@@ -35,10 +35,10 @@ CMDLINE   = quiet
 #OSREL     = /etc/os-release
 
 # dynamic osrelease info
-TIMESTAMP = $(shell date --utc +%FT%T%Z)
-KERNELVER = $(shell strings $(KERNEL) | sed -n '/gcc version/s/^\([^ ]\+\).*/\1/p')
+TIMESTAMP = $(shell date --utc +%FT%H%M%SZ)
+KERNELVER = $(shell file $(KERNEL) | sed 's/.* version \([^ ]\+\) .*/\1/')
 OSNAME    = $(shell source /etc/os-release && echo "$$PRETTY_NAME")
-OSREL     = <(printf '%s=\"%s\"\n' PRETTY_NAME '$(OSNAME)' ID '$(ID)' VERSION_ID 'v$(KERNELVER)-$(TIMESTAMP)')
+OSREL     = <(printf '%s=\"%s\"\n' PRETTY_NAME '$(OSNAME)' ID '$(ID)' VERSION_ID '$(KERNELVER)' BUILD_ID '$(TIMESTAMP)')
 
 # search for kernels / hook targets
 FOUNDKERNELS = $(addprefix kernel-,$(shell ls $(BOOT)/vmlinuz-* | sed 's/.*\/vmlinuz-//'))
